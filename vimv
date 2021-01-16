@@ -19,7 +19,13 @@ for ((i=0;i<${#src[@]};++i)); do
     echo "${src[i]}" >> "${FILENAMES_FILE}"
 done
 
+FILECOUNT_SRC=$(wc -l "${FILENAMES_FILE}")
 ${EDITOR:-vi} "${FILENAMES_FILE}"
+
+[ "${FILECOUNT_SRC}" != "$(wc -l "${FILENAMES_FILE}")" ] && {
+	echo "The file count does not match, exiting"
+	exit 1
+}
 
 IFS=$'\r\n' GLOBIGNORE='*' command eval 'dest=($(cat "${FILENAMES_FILE}"))'
 
