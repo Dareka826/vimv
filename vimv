@@ -7,7 +7,7 @@ set -eu
 FILENAMES_SRC="$(mktemp "${TMPDIR:-/tmp}/vimv.XXX")"
 FILENAMES_DST="$(mktemp "${TMPDIR:-/tmp}/vimv.XXX")"
 cleanup() { rm -f "${FILENAMES_SRC}" "${FILENAMES_DST}"; }
-trap cleanup EXIT
+trap cleanup EXIT TERM INT HUP
 
 [ "${#}" -gt 0 ] || exit 1
 
