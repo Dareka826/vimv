@@ -34,8 +34,8 @@ move_files() {
             continue
         }
 
-        mkdir -p "$(dirname "${DST_FILE}")"
-        mv "${SRC_FILE}" "${DST_FILE}"
+        mkdir -p "$(dirname -- "${DST_FILE}")"
+        mv -- "${SRC_FILE}" "${DST_FILE}"
 
         COUNT="$((COUNT + 1))"
     done
