@@ -4,12 +4,13 @@ set -eu
 # Bulk rename files with the power of vim
 # USAGE: vimv [file...]
 
+[ "${#}" -gt 0 ] || \
+    exec /bin/sh "${0}" ./*
+
 FILENAMES_SRC="$(mktemp "${TMPDIR:-/tmp}/vimv.XXX")"
 FILENAMES_DST="$(mktemp "${TMPDIR:-/tmp}/vimv.XXX")"
 cleanup() { rm -f "${FILENAMES_SRC}" "${FILENAMES_DST}"; }
 trap cleanup EXIT TERM INT HUP
-
-[ "${#}" -gt 0 ] || exit 1
 
 printf "%s\n" "$@" | tee "${FILENAMES_SRC}" >"${FILENAMES_DST}"
 
