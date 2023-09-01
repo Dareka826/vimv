@@ -14,7 +14,13 @@ cleanup() { rm -f "${EDIT_TMP}"; }
 trap cleanup EXIT TERM INT HUP
 
 # If no arguments, re-exec with paths in current dir
-[ "${#}" -gt 0 ] || exec "$0" ./*
+[ "${#}" -gt 0 ] || {
+    if [ -x "$0" ]; then
+        exec "$0" ./*
+    else
+        exec /bin/sh "$0" ./*
+    fi
+}
 
 # Store supplied paths (and strip leading './') ; copy to file list
 PATHS_SRC="$(printf "%s\n" "$@" | sed 's/^\.\///')${NL}"
