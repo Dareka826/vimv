@@ -4,16 +4,7 @@ vimv is a terminal-based file rename utility that lets you easily mass-rename fi
 
 ## Installing
 
-1. For the current user:
-   ```
-   curl https://raw.githubusercontent.com/thameera/vimv/master/vimv > ~/bin/vimv && chmod +755 ~/bin/vimv
-   ```
-2. For the current system:
-   ```
-   sudo PREFIX=/usr/local make install
-   ```
-
-Or simply copy the `vimv` file to a location in your `$PATH` and make it executable.
+Copy the `vimv` file to a location in your `$PATH` and make it executable.
 
 ## Usage
 
@@ -26,7 +17,6 @@ Or simply copy the `vimv` file to a location in your `$PATH` and make it executa
 
 * If you want to list only a group of files, you can pass them as an argument. eg: `vimv *.mp4`
 * If you have an `$EDITOR` environment variable set, vimv will use its value by default.
-* If you are inside a Git directory, vimv will use `git mv` (instead of `mv`) to rename the files.
 * You can use `/some/path/filename` format to move the file elsewhere during renaming. If the path is non-existent, it will be automatically created before moving.
 
 ## Screencast
@@ -35,4 +25,4 @@ Or simply copy the `vimv` file to a location in your `$PATH` and make it executa
 
 ## Gotchas
 
-Don't delete or swap the lines while in Vim or things will get ugly.
+Don't swap the lines while in Vim or things will get ugly.
