@@ -1,47 +1,58 @@
 #!/bin/sh
 set -eu
 
-# Bulk rename files with the power of vim
-# USAGE: vimv [file...]
+# Bulk rename with the power of vim
+# USAGE: vimv [path...]
 
-[ "${#}" -gt 0 ] || \
-    exec /bin/sh "${0}" ./*
+_FS="$(printf "\034")"
+NL="$(printf "\nx")"
+NL="${NL%x}"
 
-FILENAMES_SRC="$(mktemp "${TMPDIR:-/tmp}/vimv.XXX")"
-FILENAMES_DST="$(mktemp "${TMPDIR:-/tmp}/vimv.XXX")"
-cleanup() { rm -f "${FILENAMES_SRC}" "${FILENAMES_DST}"; }
+# Create file for editing
+EDIT_TMP="$(mktemp "${TMPDIR:-/tmp}/vimv.XXX")"
+cleanup() { rm -f "${EDIT_TMP}"; }
 trap cleanup EXIT TERM INT HUP
 
-printf "%s\n" "$@" | tee "${FILENAMES_SRC}" >"${FILENAMES_DST}"
+# If no arguments, re-exec with paths in current dir
+[ "${#}" -gt 0 ] || exec "$0" ./*
 
- LINES_PRE="$(wc -l "${FILENAMES_DST}")"
-${EDITOR:-vi} "${FILENAMES_DST}"
-LINES_POST="$(wc -l "${FILENAMES_DST}")"
+# Store supplied paths (and strip leading './') ; copy to file list
+PATHS_SRC="$(printf "%s\n" "$@" | sed 's/^\.\///')${NL}"
+printf "%s" "${PATHS_SRC}" >"${EDIT_TMP}"
 
-if [ "${LINES_POST}" != "${LINES_PRE}" ]; then
-    printf "%s\n" "WARN: Number of files changed. Did you delete a line by accident? Aborting..." >&2
+# Edit the file list
+${EDITOR:-vi} "${EDIT_TMP}"
+
+# Check that the number of lines stayed the same
+if [ "$(printf "%s" "${PATHS_SRC}" | wc -l)" != "$(wc -l <"${EDIT_TMP}")" ]; then
+    printf "%s\n" "[W]: Number of lines changed. Did you delete one by accident? Aborting..." >&2
     exit 1
 fi
 
-# Input: lines of SRC and DEST separated by RS (\x1e)
-move_files() {
+# Input: lines of SRC and DEST separated by _FS
+move_paths() {
     COUNT="0"
 
-    while IFS="$(printf '\n\036')" read -r SRC_FILE DST_FILE; do
-        [ "${SRC_FILE}" != "${DST_FILE}" ] || continue
-        [ -e "${SRC_FILE}" ] || {
-            printf "WARN: Skipping nonexistent file: %s\n" "${SRC_FILE}" >&2
+    IFS="${NL}${_FS}"
+    while read -r SRC_PATH DST_PATH; do
+        [ "${SRC_PATH}" != "${DST_PATH}" ] || continue
+        [ -e "${SRC_PATH}" ] || {
+            printf "[W]: Skipping nonexistent path: %s\n" "${SRC_PATH}" >&2
             continue
         }
 
-        mkdir -p "$(dirname -- "${DST_FILE}")"
-        mv -- "${SRC_FILE}" "${DST_FILE}"
+        # Add leading './' if not an absolute path
+        [ "$(printf "%s" "${SRC_PATH}" | cut -c1)" = "/" ] || SRC_PATH="./${SRC_PATH}"
+        [ "$(printf "%s" "${DST_PATH}" | cut -c1)" = "/" ] || DST_PATH="./${DST_PATH}"
+
+        mkdir -p -- "$(dirname "${DST_PATH}")"
+        mv -- "${SRC_PATH}" "${DST_PATH}"
 
         COUNT="$((COUNT + 1))"
     done
 
-    printf "Renamed %d files.\n" "${COUNT}"
+    printf "Renamed %d paths.\n" "${COUNT}"
 }
 
-# Join src and dest with the record separator
-paste -d"$(printf '\036')" "${FILENAMES_SRC}" "${FILENAMES_DST}" | move_files
+# Join src and dest with _FS
+printf "%s" "${PATHS_SRC}" | paste -d"${_FS}" - "${EDIT_TMP}" | move_paths
